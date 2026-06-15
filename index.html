@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Aura Player</title>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- Background: the girl -->
+  <div class="bg-layer"></div>
+  <div class="bg-vignette"></div>
+
+  <!-- Ambient particle canvas for visualizer glow -->
+  <canvas id="vis-canvas"></canvas>
+
+  <!-- Cards are injected here by app.js from the TRACKS array -->
+  <div id="scene"></div>
+
+  <audio id="audio" crossorigin="anonymous"></audio>
+  <script src="app.js"></script>
+</body>
+</html>

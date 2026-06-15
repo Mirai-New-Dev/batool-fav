@@ -1,0 +1,396 @@
+/* ─── Reset & Base ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary: #d0bcff;
+  --secondary: #4cd7f6;
+  --accent: #fbabff;
+  --bg: #08101f;
+  --glass-bg: rgba(10, 15, 35, 0.60);
+  --glass-border: rgba(255,255,255,0.12);
+  --glass-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  --on-surface: #e8eeff;
+  --muted: rgba(200,210,255,0.5);
+  --radius: 18px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--on-surface);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ─── Background ─── */
+.bg-layer {
+  position: fixed; inset: 0; z-index: 0;
+  background-image: url('assets/background.jpg');
+  background-size: cover;
+  background-position: center top;
+}
+
+.bg-vignette {
+  position: fixed; inset: 0; z-index: 1;
+  background:
+    radial-gradient(ellipse 65% 75% at 50% 50%, transparent 25%, rgba(4,8,20,0.5) 100%),
+    linear-gradient(to bottom, rgba(4,8,20,0.1) 0%, rgba(4,8,20,0.45) 100%);
+  transition: background 1.2s ease;
+}
+body.playing .bg-vignette {
+  background:
+    radial-gradient(ellipse 65% 75% at 50% 50%, rgba(208,188,255,0.06) 20%, rgba(4,8,20,0.52) 100%),
+    linear-gradient(to bottom, rgba(4,8,20,0.08) 0%, rgba(4,8,20,0.38) 100%);
+}
+
+/* ─── Visualizer Canvas ─── */
+#vis-canvas {
+  position: fixed; inset: 0; z-index: 2;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+body.playing #vis-canvas { opacity: 1; }
+
+/* ─── Scene container ─── */
+#scene {
+  position: fixed; inset: 0; z-index: 10;
+  pointer-events: none;
+}
+
+/* ════════════════════════════════════════
+   MUSIC CARD — base (mini chip on sides)
+   ════════════════════════════════════════ */
+.music-card {
+  position: absolute;
+  /* Mini chip: just art + song name */
+  width: 200px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(30px) saturate(1.7);
+  -webkit-backdrop-filter: blur(30px) saturate(1.7);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,0.08);
+  pointer-events: auto;
+  cursor: pointer;
+  overflow: hidden;
+
+  /* smooth all transitions */
+  transition:
+    width      0.55s var(--ease),
+    padding    0.55s var(--ease),
+    opacity    0.4s  ease,
+    box-shadow 0.5s  ease,
+    border-color 0.5s ease,
+    transform  0.65s var(--ease);
+}
+
+/* Shimmer sweep */
+.music-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: var(--radius);
+  background: linear-gradient(125deg,
+    rgba(255,255,255,0) 40%,
+    rgba(255,255,255,0.055) 50%,
+    rgba(255,255,255,0) 60%);
+  background-size: 250% 250%;
+  animation: shimmer 5s linear infinite;
+  pointer-events: none;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Card Positions on the sides ─── */
+#card-0 { top: 12vh;  left: 2vw; }
+#card-1 { top: 50vh;  left: 1.5vw; }
+#card-2 { top: 10vh;  right: 2vw; }
+#card-3 { top: 57vh;  right: 2vw; }
+
+/* ─── Float Animations ─── */
+@keyframes float-a { 0%,100%{transform:translateY(0)}   50%{transform:translateY(-12px)} }
+@keyframes float-b { 0%,100%{transform:translateY(0)}   50%{transform:translateY(-8px)}  }
+@keyframes float-c { 0%,100%{transform:translateY(0)}   50%{transform:translateY(-16px)} }
+@keyframes float-d { 0%,100%{transform:translateY(-6px)} 50%{transform:translateY(8px)} }
+
+.float-a { animation: float-a 7s ease-in-out infinite; }
+.float-b { animation: float-b 9s ease-in-out infinite; }
+.float-c { animation: float-c 6s ease-in-out infinite; }
+.float-d { animation: float-d 8s ease-in-out infinite; }
+
+/* ────────────────────────────
+   ACTIVE card → center, bigger
+   ──────────────────────────── */
+.music-card.card-active {
+  position: fixed !important;
+  top:    50%  !important;
+  left:   50%  !important;
+  right:  auto !important;
+  bottom: auto !important;
+  width: 300px !important;
+  transform: translate(-50%, -50%) scale(1.04) !important;
+  animation: none !important;
+  z-index: 100;
+  cursor: default;
+  padding: 16px !important;
+  box-shadow:
+    0 0 90px rgba(208, 188, 255, 0.3),
+    0 0 35px rgba(76, 215, 246, 0.15),
+    0 24px 70px rgba(0,0,0,0.75),
+    inset 0 1px 0 rgba(255,255,255,0.14);
+  border-color: rgba(208,188,255,0.28);
+}
+
+/* Faded sibling cards */
+.music-card.card-faded {
+  opacity: 0.15;
+  pointer-events: none;
+  transform: scale(0.95);
+}
+
+/* ════════════════════════════
+   CHIP LAYOUT  (mini / idle)
+   ════════════════════════════ */
+.chip-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ─── Album Art ─── */
+.card-art-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 46px; height: 46px;
+}
+
+.card-art {
+  width: 100%; height: 100%;
+  border-radius: 10px;
+  object-fit: cover;
+  display: block;
+  transition: border-radius 0.5s var(--ease);
+}
+
+/* Spin art when playing */
+.music-card.is-playing .card-art {
+  border-radius: 50%;
+  animation: spin-art 10s linear infinite;
+}
+@keyframes spin-art {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Vinyl ring while playing */
+.art-spin-ring {
+  position: absolute; inset: -3px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--primary);
+  border-right-color: var(--secondary);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.music-card.is-playing .art-spin-ring {
+  opacity: 1;
+  animation: spin-art 1.8s linear infinite;
+}
+
+/* Chip meta (title only on mini card) */
+.chip-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.chip-artist {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chip-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--on-surface);
+}
+
+/* Mini play hint icon */
+.chip-play-hint {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.music-card:hover .chip-play-hint { color: var(--primary); transform: scale(1.2); }
+
+/* ════════════════════════════
+   EXPANDED PLAYER CONTENT
+   (hidden on mini, revealed on active)
+   ════════════════════════════ */
+.player-expand {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition:
+    max-height 0.55s var(--ease),
+    opacity    0.4s  ease 0.08s;
+  pointer-events: none;
+}
+.music-card.card-active .player-expand {
+  max-height: 200px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* hide hint icon when expanded */
+.music-card.card-active .chip-play-hint { display: none; }
+
+/* ─── Progress Bar ─── */
+.card-progress-row { margin: 12px 0 6px; }
+
+.progress-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 99px;
+  cursor: pointer;
+  position: relative;
+  overflow: visible;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  border-radius: 99px;
+  position: relative;
+  transition: width 0.1s linear;
+}
+.progress-dot {
+  position: absolute;
+  right: -5px; top: 50%;
+  transform: translateY(-50%);
+  width: 10px; height: 10px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--primary);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.progress-track:hover .progress-dot { opacity: 1; }
+
+.card-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  margin-top: 5px;
+}
+
+/* ─── Controls Row ─── */
+.card-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.ctrl-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+.ctrl-btn span { font-size: 20px; font-variation-settings: 'FILL' 0; }
+.ctrl-btn:hover { color: var(--on-surface); background: rgba(255,255,255,0.07); }
+.ctrl-btn:active { transform: scale(0.9); }
+
+/* Play button */
+.play-btn {
+  width: 44px; height: 44px;
+  background: rgba(255,255,255,0.92);
+  color: #0b1326;
+  box-shadow: 0 0 22px rgba(255,255,255,0.15);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease, color 0.2s ease;
+}
+.play-btn span { font-size: 24px; font-variation-settings: 'FILL' 1; }
+.play-btn:hover {
+  background: #fff;
+  box-shadow: 0 0 32px rgba(255,255,255,0.38);
+  transform: scale(1.08);
+}
+.play-btn:active { transform: scale(0.94); }
+.music-card.is-playing .play-btn { animation: pulse-play 2.5s ease-in-out infinite; }
+@keyframes pulse-play {
+  0%,100% { box-shadow: 0 0 22px rgba(255,255,255,0.15); }
+  50%      { box-shadow: 0 0 42px rgba(255,255,255,0.42); }
+}
+
+.repeat-btn.active { color: var(--primary); }
+
+/* Like button */
+.like-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.2s ease, transform 0.2s ease;
+  width: 34px; height: 34px; border-radius: 50%;
+}
+.like-btn:hover { transform: scale(1.15); }
+.like-icon { font-size: 19px; font-variation-settings: 'FILL' 0; transition: font-variation-settings 0.2s; }
+.like-btn.liked .like-icon { color: #ff6b8a; font-variation-settings: 'FILL' 1; }
+
+/* ─── Close Button ─── */
+.close-btn {
+  position: absolute;
+  top: 9px; right: 9px;
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--muted);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, background 0.2s ease;
+}
+.close-btn span { font-size: 14px; }
+.music-card.card-active .close-btn { opacity: 1; pointer-events: auto; }
+.close-btn:hover { background: rgba(255,255,255,0.18); color: var(--on-surface); }
+
+/* ─── Mobile ─── */
+@media (max-width: 600px) {
+  .music-card { width: 165px; }
+  #card-0 { top:  9vh; left:  2vw; }
+  #card-1 { top: 50vh; left:  1vw; }
+  #card-2 { top:  9vh; right: 2vw; }
+  #card-3 { top: 55vh; right: 1vw; }
+  .music-card.card-active { width: 270px !important; }
+}
